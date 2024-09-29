@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Group Image Matching App</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        #webcam {
+            border: 2px solid #ccc;
+            width: 320px;
+            height: 240px;
+        }
+        #group-list {
+            margin-top: 20px;
+        }
+        #graph-container {
+            margin-top: 40px;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Group Image Matching App</h1>
+
+<!-- 그룹 생성 -->
+<div>
+    <h2>Create Group</h2>
+    <label for="group-name">Group Name:</label>
+    <input type="text" id="group-name" placeholder="Enter group name">
+    <input type="file" id="group-images" multiple accept="image/*">
+    <button onclick="createGroup()">Create Group</button>
+</div>
+
+<!-- 그룹 목록 -->
+<div id="group-list">
+    <h2>Group List</h2>
+    <ul id="groups">
+        <!-- 그룹이 여기에 추가됨 -->
+    </ul>
+</div>
+
+<!-- 웹캠 스트림 -->
+<div>
+    <h2>Webcam Image Recognition</h2>
+    <video id="webcam" autoplay></video>
+    <button onclick="captureImage()">Capture Image</button>
+</div>
+
+<!-- 그래프 -->
+<div id="graph-container">
+    <canvas id="matchChart" width="400" height="200"></canvas>
+</div>
+
+<script>
+    const groups = [];
+    const groupImages = {};
+
+    // 그룹 생성 함수
+    function createGroup() {
+        const groupName = document.getElementById('group-name').value;
+        const images = document.getElementById('group-images').files;
+        if (!groupName || images.length === 0) {
+            alert("Please enter a group name and select images.");
+            return;
+        }
+
+        groups.push(groupName);
+        groupImages[groupName] = Array.from(images);
+
+        updateGroupList();
+    }
+
+    // 그룹 목록 갱신
+    function updateGroupList() {
+        const groupList = document.getElementById('groups');
+        groupList.innerHTML = '';
+
+        groups.forEach(group => {
+            const li = document.createElement('li');
+            li.textContent = group;
+            groupList.appendChild(li);
+        });
+    }
+
+    // 웹캠 연결
+    async function startWebcam() {
+        const video = document.getElementById('webcam');
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+            video.srcObject = stream;
+        } catch (error) {
+            console.error('Error accessing webcam:', error);
+        }
+    }
+
+    // 웹캠 이미지 캡처
+    function captureImage() {
+        const canvas = document.createElement('canvas');
+        const video = document.getElementById('webcam');
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        const imageData = canvas.toDataURL('image/png');
+
+        // 여기서 이미지 인식 로직을 추가 (TensorFlow.js 등을 사용하여 인식)
+        // 예시: 일치도를 계산 후 그래프 업데이트
+        const matchScores = calculateMatchScores(imageData);
+        updateGraph(matchScores);
+    }
+
+    // 그룹 이미지와 비교하여 일치도 계산
+    function calculateMatchScores(imageData) {
+        // 실제 이미지 비교 로직 구현 필요
+        // 여기에 각 그룹과의 일치도를 계산하는 코드 추가
+        // 임시로 랜덤 값으로 일치도 반환
+        return groups.map(group => ({
+            group: group,
+            score: Math.random() * 100 // 랜덤값 대신 실제 일치도 계산
+        }));
+    }
+
+    // 그래프 업데이트
+    function updateGraph(matchScores) {
+        const ctx = document.getElementById('matchChart').getContext('2d');
+        const labels = matchScores.map(score => score.group);
+        const data = matchScores.map(score => score.score);
+
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Match Score',
+                    data: data,
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    }
+
+    // 웹캠 시작
+    window.onload = startWebcam;
+</script>
+
+</body>
+</html>
